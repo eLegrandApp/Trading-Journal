@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Journal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      background: linear-gradient(to bottom, #d3d3d3, #f5f5f5);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #007BFF;
+      font-size: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    input#tradeDate {
+      width: 50%;
+      text-align: left;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+      margin-right: 10px;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 10px;
+    }
+
+    thead {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 6px;
+      border: 1px solid #ddd;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Trading Journal</h1>
+    <form id="tradeForm">
+      <div class="form-group">
+        <label for="tradeDate">Trade Date</label>
+        <input type="date" id="tradeDate" required>
+      </div>
+      <div class="form-group">
+        <label for="asset">Currency Pair</label>
+        <select id="asset" required>
+          <optgroup label="Major Pairs">
+            <option value="EUR/USD">EUR/USD</option>
+            <option value="GBP/USD">GBP/USD</option>
+            <option value="USD/JPY">USD/JPY</option>
+            <option value="AUD/USD">AUD/USD</option>
+            <option value="USD/CAD">USD/CAD</option>
+            <option value="USD/CHF">USD/CHF</option>
+            <option value="NZD/USD">NZD/USD</option>
+          </optgroup>
+          <optgroup label="Minor Pairs">
+            <option value="EUR/GBP">EUR/GBP</option>
+            <option value="EUR/AUD">EUR/AUD</option>
+            <option value="GBP/JPY">GBP/JPY</option>
+            <option value="AUD/NZD">AUD/NZD</option>
+            <option value="NZD/JPY">NZD/JPY</option>
+            <option value="CHF/JPY">CHF/JPY</option>
+            <option value="EUR/NZD">EUR/NZD</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="positionType">Position</label>
+        <select id="positionType" required>
+          <option value="Buy">Buy</option>
+          <option value="Sell">Sell</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="lotSize">Lot Size</label>
+        <input type="number" id="lotSize" placeholder="e.g., 0.1000" step="0.0001" min="0" required>
+      </div>
+      <div class="form-group">
+        <label for="entryPrice">Entry Price</label>
+        <input type="number" id="entryPrice" placeholder="e.g., 1.2345" step="0.0001" required>
+      </div>
+      <div class="form-group">
+        <label for="takeProfit">Take Profit</label>
+        <input type="number" id="takeProfit" placeholder="e.g., 1.2500" step="0.0001" required>
+      </div>
+      <div class="form-group">
+        <label for="stopLoss">Stop Loss</label>
+        <input type="number" id="stopLoss" placeholder="e.g., 1.2000" step="0.0001" required>
+      </div>
+      <div class="form-group">
+        <label for="notes">Notes</label>
+        <textarea id="notes" placeholder="Add trade details"></textarea>
+      </div>
+      <button type="submit">Add Trade</button>
+    </form>
+
+    <table id="tradesTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Asset</th>
+          <th>Position</th>
+          <th>Lot Size</th>
+          <th>Entry</th>
+          <th>Take Profit</th>
+          <th>Stop Loss</th>
+          <th>Profit ($)</th>
+          <th>Loss ($)</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Trade rows will appear here -->
+      </tbody>
+    </table>
+
+    <div class="button-group">
+      <button id="saveTrades">Save</button>
+      <button id="clearTrades">Clear</button>
+    </div>
+  </div>
+  <script>
+    const tradeForm = document.getElementById('tradeForm');
+    const tradesTable = document.querySelector('#tradesTable tbody');
+    const saveButton = document.getElementById('saveTrades');
+    const clearButton = document.getElementById('clearTrades');
+
+    // Load trades from local storage on page load
+    document.addEventListener('DOMContentLoaded', loadTrades);
+
+    // Add trade to table
+    tradeForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const tradeDate = document.getElementById('tradeDate').value;
+      const asset = document.getElementById('asset').value;
+      const positionType = document.getElementById('positionType').value;
+      const lotSize = parseFloat(document.getElementById('lotSize').value);
+      const entryPrice = parseFloat(document.getElementById('entryPrice').value);
+      const takeProfit = parseFloat(document.getElementById('takeProfit').value);
+      const stopLoss = parseFloat(document.getElementById('stopLoss').value);
+      const notes = document.getElementById('notes').value;
+
+      const contractSize = 100000;
+      const profit = Math.abs((takeProfit - entryPrice) * lotSize * contractSize).toFixed(2);
+      const loss = Math.abs((entryPrice - stopLoss) * lotSize * contractSize).toFixed(2);
+
+      const row = tradesTable.insertRow();
+      row.innerHTML = `
+        <td>${tradeDate}</td>
+        <td>${asset}</td>
+        <td>${positionType}</td>
+        <td>${lotSize.toFixed(4)}</td>
+        <td>${entryPrice.toFixed(4)}</td>
+        <td>${takeProfit.toFixed(4)}</td>
+        <td>${stopLoss.toFixed(4)}</td>
+        <td style="color: green">$${profit}</td>
+        <td style="color: red">$${loss}</td>
+        <td>${notes}</td>
+      `;
+
+      tradeForm.reset();
+    });
+
+    // Save trades to local storage
+    saveButton.addEventListener('click', function () {
+      const trades = [];
+      Array.from(tradesTable.rows).forEach(row => {
+        const cells = Array.from(row.cells).map(cell => cell.textContent);
+        trades.push(cells);
+      });
+      localStorage.setItem('trades', JSON.stringify(trades));
+      saveButton.textContent = 'Saved';
+      setTimeout(() => saveButton.textContent = 'Save', 2000);
+    });
+
+    // Clear trades from table and local storage
+    clearButton.addEventListener('click', function () {
+      tradesTable.innerHTML = '';
+      localStorage.removeItem('trades');
+      clearButton.textContent = 'Cleared';
+      setTimeout(() => clearButton.textContent = 'Clear', 2000);
+    });
+
+    // Load trades from local storage
+    function loadTrades() {
+      const trades = JSON.parse(localStorage.getItem('trades') || '[]');
+      trades.forEach(cells => {
+        const row = tradesTable.insertRow();
+        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+      });
+    }
+  </script>
+</body>
+</html>
